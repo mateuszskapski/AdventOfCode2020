@@ -11,12 +11,12 @@ namespace AdventOfCode.SeatingSystem
     {
         static void Main(string[] args)
         {
-            var input = File.ReadAllText(Path.Combine(PathHelper.ProjectRootFolder(), "Input2.txt")).Split(Environment.NewLine).ToList();
+            var input = File.ReadAllText(Path.Combine(PathHelper.ProjectRootFolder(), "Input.txt")).Split(Environment.NewLine).ToList();
 
-            //SeatManager seatManagerPartOne = new SeatManager(input);
-            //seatManagerPartOne.ArrangeSeats(seatManagerPartOne.CountOccupiedAdjacentSeats, 4);
-            //int occupiedSeatsOne = seatManagerPartOne.CountOccupiedSeats();
-            //Console.WriteLine($"Part one answer: {occupiedSeatsOne}");
+            SeatManager seatManagerPartOne = new SeatManager(input);
+            seatManagerPartOne.ArrangeSeats(seatManagerPartOne.CountOccupiedAdjacentSeats, 4);
+            int occupiedSeatsOne = seatManagerPartOne.CountOccupiedSeats();
+            Console.WriteLine($"Part one answer: {occupiedSeatsOne}");
 
             SeatManager seatManagerPartTwo = new SeatManager(input);
             seatManagerPartTwo.ArrangeSeats(seatManagerPartTwo.CountOccupiedVisibleSeats, 5);
@@ -42,8 +42,6 @@ namespace AdventOfCode.SeatingSystem
         }
 
         private bool IsOccupied(int row, int column) => _currentSeatsLayout[row][column].Equals('#');
-        
-        private bool IsEmpty(int row, int column) => _currentSeatsLayout[row][column].Equals('L');
 
         private bool IsFloor(int row, int column) => _currentSeatsLayout[row][column].Equals('.');
 
@@ -152,7 +150,7 @@ namespace AdventOfCode.SeatingSystem
                 {
                     if (nextRow > row && nextCol > column)
                     {
-                        return (--nextRow, --nextCol);
+                        return (++nextRow, ++nextCol);
                     }
                     else if (nextRow > row && nextCol < column)
                     {
@@ -167,7 +165,7 @@ namespace AdventOfCode.SeatingSystem
                         return (--nextRow, --nextCol);
                     }
                     else
-                        throw new ArgumentException("Unsupported position");
+                        throw new ArgumentException("Not supported position");
 
                 }
             }
