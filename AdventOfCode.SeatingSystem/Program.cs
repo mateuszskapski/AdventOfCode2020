@@ -11,20 +11,18 @@ namespace AdventOfCode.SeatingSystem
     {
         static void Main(string[] args)
         {
-            var input = File.ReadAllText(Path.Combine(PathHelper.ProjectRootFolder(), "Input.txt")).Split(Environment.NewLine).ToList();
+            var input = File.ReadAllText(Path.Combine(PathHelper.ProjectRootFolder(), "Input2.txt")).Split(Environment.NewLine).ToList();
 
-            SeatManager seatManager = new SeatManager(input);
-            seatManager.ArrangeSeats(4);
-            int occupiedSeats = seatManager.CountOccupiedSeats();
+            //SeatManager seatManagerPartOne = new SeatManager(input);
+            //seatManagerPartOne.ArrangeSeats(seatManagerPartOne.CountOccupiedAdjacentSeats, 4);
+            //int occupiedSeatsOne = seatManagerPartOne.CountOccupiedSeats();
+            //Console.WriteLine($"Part one answer: {occupiedSeatsOne}");
 
-            Console.WriteLine($"Part one answer: {occupiedSeats}");
+            SeatManager seatManagerPartTwo = new SeatManager(input);
+            seatManagerPartTwo.ArrangeSeats(seatManagerPartTwo.CountOccupiedVisibleSeats, 5);
+            int occupiedSeatsTwo = seatManagerPartTwo.CountOccupiedSeats();
+            Console.WriteLine($"Part two answer: {occupiedSeatsTwo}");
         }
-    }
-
-    internal struct Seat
-    {
-        public int Row;
-        public int Column;
     }
 
     internal class SeatManager
@@ -33,6 +31,7 @@ namespace AdventOfCode.SeatingSystem
         private List<string> _newSeatLayout;
         private readonly int _maxRows;
         private readonly int _maxRowSeats;
+        private int _arrangeCount = 0;
 
         public SeatManager(List<string> seatLayout)
         {
@@ -42,40 +41,142 @@ namespace AdventOfCode.SeatingSystem
             _maxRowSeats = seatLayout[0].Length;
         }
 
-        private bool IsOccupied(Seat seat) => _currentSeatsLayout[seat.Row][seat.Column].Equals('#');
+        private bool IsOccupied(int row, int column) => _currentSeatsLayout[row][column].Equals('#');
+        
+        private bool IsEmpty(int row, int column) => _currentSeatsLayout[row][column].Equals('L');
 
-        private int CountOccupiedAdjacentSeats(Seat seat)
+        private bool IsFloor(int row, int column) => _currentSeatsLayout[row][column].Equals('.');
+
+        public int CountOccupiedAdjacentSeats(int row, int column)
         {
             int occupiedSeats = 0;
 
-            for (int row = seat.Row > 0 ? seat.Row - 1 : 0;
-                seat.Row >= 0 && row <= seat.Row + 1 && row >= seat.Row - 1 && row < _maxRows;
-                row++)
+            for (int seatRow = row > 0 ? row - 1 : 0;
+                row >= 0 && seatRow <= row + 1 && row >= row - 1 && seatRow < _maxRows;
+                seatRow++)
             {
-                for (int col = seat.Column > 0 ? seat.Column - 1 : 0;
-                    seat.Column >= 0 && col <= seat.Column + 1 && col >= seat.Column - 1 && col < _maxRowSeats;
-                    col++)
+                for (int seatCol = column > 0 ? column - 1 : 0;
+                    column >= 0 && seatCol <= column + 1 && seatCol >= column - 1 && seatCol < _maxRowSeats;
+                    seatCol++)
                 {
-                    if (row == seat.Row && col == seat.Column)
+                    if (row == seatRow && column == seatCol)
                     {
                         continue;
                     }
 
-                    if (IsOccupied(new Seat { Row = row, Column = col }))
+                    if (IsOccupied(seatRow, seatCol))
                     {
                         occupiedSeats++;
-                        //System.Diagnostics.Debug.WriteLine($"Seat row: {seat.Row}, col: {seat.Column}: Occupied: row: {row}, col {col}");
                     }
                 }
             }
 
-            //System.Diagnostics.Debug.WriteLine($"R: {seat.Row}, C: {seat.Column} is occupied by {occupiedSeats} seats");
-
             return occupiedSeats;
         }
 
-        public void ArrangeSeats(int tolerance)
+        public int CountOccupiedVisibleSeats(int row, int column)
         {
+            int occupiedSeat = 0;
+
+            for (int r = row > 0 ? row - 1 : 0;
+                row >= 0 && r <= row + 1 && row >= row - 1 && r < _maxRows;
+                r++)
+            {
+                for (int c = column > 0 ? column - 1 : 0;
+                    column >= 0 && c <= column + 1 && c >= column - 1 && c < _maxRowSeats;
+                    c++)
+                {
+                    if (r == row && c == column) continue;
+
+                    if (IsFloor(r,c))
+                    {
+                        (int row, int column) nextSit = (r, c);
+                        while (IsFloor(nextSit.row, nextSit.column))
+                        {
+                            nextSit = GetAvailableNextSit(row, column, nextSit.row, nextSit.column);
+                            if (nextSit.row >= _maxRows || nextSit.column >= _maxRowSeats || nextSit.row < 0 || nextSit.column < 0)
+                            {
+                                break;
+                            }
+
+                            if (IsOccupied(nextSit.row, nextSit.column))
+                            {
+                                occupiedSeat++;
+                            }
+                        }
+                    } else if (IsOccupied(r, c))
+                    {
+                        occupiedSeat++;
+                    }
+                }
+            }
+
+            return occupiedSeat;
+        }
+
+        private (int row, int column) GetAvailableNextSit(int row, int column, int nextRow, int nextCol)
+        {
+            if (nextRow == row)
+            {
+                if (nextCol > column)
+                {
+                    return (nextRow, ++nextCol);
+                }
+                else if  (nextCol < column)
+                {
+                    return (nextRow, --nextCol);
+                }
+                else
+                {
+                    throw new ArgumentException("Positions are the same.");
+                }
+            }
+            else
+            {
+                if (nextCol == column)
+                {
+                    if (nextRow > row)
+                    {
+                        return (++nextRow, nextCol);
+                    }
+                    else if (nextRow < row)
+                    {
+                        return (--nextRow, nextCol);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Positions are the same");
+                    }
+                }
+                else
+                {
+                    if (nextRow > row && nextCol > column)
+                    {
+                        return (--nextRow, --nextCol);
+                    }
+                    else if (nextRow > row && nextCol < column)
+                    {
+                        return (++nextRow, --nextCol);
+                    }
+                    else if (nextRow < row && nextCol > column)
+                    {
+                        return (--nextRow, ++nextCol);
+                    }
+                    else if (nextRow < row && nextCol < column)
+                    {
+                        return (--nextRow, --nextCol);
+                    }
+                    else
+                        throw new ArgumentException("Unsupported position");
+
+                }
+            }
+        }
+
+        public void ArrangeSeats(Func<int, int, int> countSeats, int tolerance)
+        {
+            _arrangeCount++;
+
             _newSeatLayout.Clear();
 
             for (int row = 0; row < _maxRows; row++)
@@ -90,7 +191,7 @@ namespace AdventOfCode.SeatingSystem
                         continue;
                     }
 
-                    int occupiedAdjacentSeats = CountOccupiedAdjacentSeats(new Seat { Row = row, Column = col });
+                    int occupiedAdjacentSeats = countSeats(row, col);
                     if (seatStatus.Equals('L') && occupiedAdjacentSeats == 0)
                     {
                         newRow.Append('#');
@@ -111,7 +212,7 @@ namespace AdventOfCode.SeatingSystem
             if (!Enumerable.SequenceEqual(_currentSeatsLayout, _newSeatLayout))
             {
                 _currentSeatsLayout = new List<string>(_newSeatLayout);
-                ArrangeSeats(tolerance);
+                ArrangeSeats(countSeats, tolerance);
             }
             else
                 return;
