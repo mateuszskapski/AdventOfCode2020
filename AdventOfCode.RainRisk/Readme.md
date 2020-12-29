@@ -38,7 +38,8 @@ Your puzzle answer was 879.
 
 The first half of this puzzle is complete! It provides one gold star: *
 
---- Part Two ---
+## --- Part Two ---
+
 Before you can give the destination to the captain, you realize that the actual action meanings were printed on the back of the instructions the whole time.
 
 Almost all of the actions indicate how to move a waypoint which is relative to the ship's position:
