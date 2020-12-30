@@ -16,6 +16,13 @@ namespace AdventOfCode.RainRisk
             var (posX, posY) = nav.Navigate(input);
             var partOne = nav.GetManhattanDistance();
             Console.WriteLine($"Part one: {partOne}");
+
+            nav = new Navigator();
+            nav.SetStartPosX(10);
+            nav.SetStartPosY(1);
+            nav.NavigateRelative(input);
+            var partTwo = nav.GetShipManhattanDistance();
+            Console.WriteLine($"Part two: {partTwo}");
         }
 
         struct NavigatorInstruction
@@ -36,7 +43,12 @@ namespace AdventOfCode.RainRisk
 
             private int _posX = 0;
             private int _posY = 0;
+            private int _shipPosX = 0;
+            private int _shipPosY = 0;
             private int _currentFace = (int)Face.East;
+
+            public void SetStartPosX(int value) => _posX = value;
+            public void SetStartPosY(int value) => _posY = value;
 
             private void MoveNorth(int value) => _posY += value;
             private void MoveEast(int value) => _posX += value;
@@ -54,9 +66,7 @@ namespace AdventOfCode.RainRisk
                 }
             }
             private void TurnLeft(int value)
-            {
-                Console.WriteLine($"Current face is {_currentFace}. Turn Left by: {value}");
-                
+            { 
                 _currentFace -= value;
                 if (_currentFace >= 360)
                 {
@@ -69,8 +79,6 @@ namespace AdventOfCode.RainRisk
             }
             private void TurnRight(int value)
             {
-                Console.WriteLine($"Current face is {_currentFace}. Turn Right by: {value}");
-
                 _currentFace = Math.Abs(_currentFace + value);
                 if (_currentFace >= 360)
                 {
@@ -81,7 +89,39 @@ namespace AdventOfCode.RainRisk
                     _currentFace = 360 + _currentFace;
                 }
             }
+            private void RotateLeft(int value)
+            {
+                for (int i = 0; i < value / 90; i++)
+                {
+                    var posX = _posX + _posY;
+                    posX = _posX - posX;
 
+                    var posY = _posX - _posY;
+                    posY = _posY + posY;
+
+                    _posX = posX;
+                    _posY = posY;
+                }
+            }
+            private void RotateRight(int value)
+            {
+                for (int i = 0; i < value / 90; i++)
+                {
+                    var posX = _posX - _posY;
+                    posX = _posX - posX;
+
+                    var posY = _posX + _posY;
+                    posY = _posY - posY;
+
+                    _posX = posX;
+                    _posY = posY;
+                }
+            }
+            private void MoveForwardToWaypoint(int value)
+            {
+                _shipPosY += value * _posY; 
+                _shipPosX += value * _posX;
+            }
             public (int posX, int posY) Navigate(List<NavigatorInstruction> instructions)
             {
                 foreach(var instruction in instructions)
@@ -101,8 +141,27 @@ namespace AdventOfCode.RainRisk
 
                 return (_posX, _posY);
             }
+            public (int posX, int posY) NavigateRelative(List<NavigatorInstruction> instructions)
+            {
+                foreach (var instruction in instructions)
+                {
+                    switch (instruction.Action)
+                    {
+                        case 'N': MoveNorth(instruction.Value); break;
+                        case 'S': MoveSouth(instruction.Value); break;
+                        case 'E': MoveEast(instruction.Value); break;
+                        case 'W': MoveWest(instruction.Value); break;
+                        case 'L': RotateLeft(instruction.Value); break;
+                        case 'R': RotateRight(instruction.Value); break;
+                        case 'F': MoveForwardToWaypoint(instruction.Value); break;
+                        default: throw new NotImplementedException();
+                    }
+                }
 
+                return (_posX, _posY);
+            }
             public int GetManhattanDistance() => Math.Abs(_posX) + Math.Abs(_posY);
+            public int GetShipManhattanDistance() => Math.Abs(_shipPosX) + Math.Abs(_shipPosY);
         }
     }
 }
