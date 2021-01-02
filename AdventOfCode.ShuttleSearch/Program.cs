@@ -14,8 +14,8 @@ namespace AdventOfCode.ShuttleSearch
             int currentTimestamp = int.Parse(input[0]);
             var nextBus = input[1].Replace("x,", string.Empty)
                 .Split(',')
-                .Select(b => int.Parse(b))
-                .Select(b => new Tuple<int,int>(b, currentTimestamp - (currentTimestamp % b) + b))
+                .Select(int.Parse)
+                .Select(b => (b, currentTimestamp - (currentTimestamp % b) + b))
                 .OrderBy(b => b.Item2)
                 .Where(x => x.Item2 > currentTimestamp)
                 .First();
